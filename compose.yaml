@@ -1,1 +1,30 @@
 services:
+  postgres:
+    image: postgres:18.0-alpine3.22
+    container_name: postgres-movie-trailers
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: 53cret
+      POSTGRES_DB: movie_trailers
+      POSTGRES_USER: yu71
+    ports:
+      - "5433:5432"
+    expose:
+      - "5433"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U yu71 -d trailers" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+    networks:
+      - trailers-network
+
+volumes:
+  postgres_data:
+
+networks:
+  trailers-network:
+    driver: bridge
