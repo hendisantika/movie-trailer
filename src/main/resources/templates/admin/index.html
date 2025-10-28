@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html layout:decorate="~{master.html}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Admin Movies</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <h2>Movies</h2>
+    <div class="text-end">
+        <a class="btn btn-primary mb-3" href="/admin/movies/new">
+            Add movie </a>
+    </div>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Movie</th>
+            <th>Premiere Date</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="movie : ${movies}" th:object="${movie}">
+            <td style="width:150px;">
+                <a data-fancybox th:href="@{/assets/{filename}(filename=*{routeCover})}">
+                    <img alt="" class="img-thumbnail w-100" th:src="@{/assets/{filename}(filename=*{routeCover})}">
+                </a>
+            </td>
+            <td>
+                <div class="fs-5 fw-bold" th:text="*{title}"></div>
+                <p th:text="*{sinopsis}"></p>
+                <div>
+							<span class="badge rounded-pill bg-light text-dark me-1"
+                                  th:each="genre : *{genres}" th:text="${genre.title}">
+							</span>
+                </div>
+            </td>
+            <td th:text="*{#temporals.format(premiereDate,'dd/MM/yyyy')}"></td>
+            <td class="text-end">
+                <a th:href="@{/admin/movies/{id}/edit(id=*{id})}">Edit</a>
+                <a class="text-danger ms-3" href="javascript:void(0)"
+                   th:onclick="'deleteMovie(' + *{id} +')'">Delete</a>
+                <form class="d-none" method="post" th:action="@{/admin/movies/{id}/delete(id=*{id})}"
+                      th:id="'deleteMovieForm' + *{id}">
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="row mt-5" th:with="page=${movies}">
+        <div class="col-sm-6">
+            <div sd:pagination-sumary>
+            </div>
+            <div class="col-sm-6">
+                <nav>
+                    <ul class="pagination" sd:pagination="full"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+    <script>
+        function deleteMovie(id) {
+            if (!confirm('Are you sure to delete this movie?')) {
+                return;
+            }
+            $('#deleteMovieForm' + id).submit();
+        }
+    </script>
+</div>
+
+</body>
+</html>
