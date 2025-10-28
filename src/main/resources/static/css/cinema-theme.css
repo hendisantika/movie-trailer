@@ -1,0 +1,429 @@
+/* ============================================
+   CinemaTrailer - Modern Movie Theme
+   Dark cinematic UI with gold accents
+   ============================================ */
+
+:root {
+    --cinema-dark: #0a0a0a;
+    --cinema-darker: #000000;
+    --cinema-card: #1a1a1a;
+    --cinema-gold: #d4af37;
+    --cinema-gold-light: #f4d03f;
+    --cinema-red: #e50914;
+    --cinema-red-hover: #f40612;
+    --cinema-gray: #808080;
+    --cinema-light: #e5e5e5;
+    --cinema-gradient: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+}
+
+/* Global Styles */
+body {
+    background: var(--cinema-dark);
+    color: var(--cinema-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    background-image: radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(229, 9, 20, 0.05) 0%, transparent 50%);
+}
+
+/* Navbar Styling */
+.navbar {
+    background: rgba(10, 10, 10, 0.95) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.1);
+    border-bottom: 2px solid var(--cinema-gold);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--cinema-gold) !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    color: var(--cinema-gold-light) !important;
+    text-shadow: 0 0 30px rgba(212, 175, 55, 0.8);
+    transform: scale(1.05);
+}
+
+.navbar-brand::before {
+    content: '🎬 ';
+    margin-right: 8px;
+}
+
+.nav-link {
+    color: var(--cinema-light) !important;
+    font-weight: 500;
+    margin: 0 0.5rem;
+    padding: 0.5rem 1rem !important;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--cinema-gold);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover {
+    color: var(--cinema-gold) !important;
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.nav-link:hover::after {
+    width: 80%;
+}
+
+/* Hero Section */
+.hero-section {
+    background: var(--cinema-gradient);
+    border: 2px solid var(--cinema-gold);
+    border-radius: 15px;
+    padding: 4rem 3rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5),
+    inset 0 0 100px rgba(212, 175, 55, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(212, 175, 55, 0.03) 2px,
+            rgba(212, 175, 55, 0.03) 4px
+    );
+    animation: scanlines 10s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes scanlines {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(50px);
+    }
+}
+
+.hero-section h1 {
+    color: var(--cinema-gold);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.5),
+    0 0 40px rgba(212, 175, 55, 0.3);
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-section h2 {
+    color: var(--cinema-light);
+    font-weight: 300;
+    position: relative;
+    z-index: 1;
+}
+
+/* Section Headers */
+.section-title {
+    color: var(--cinema-gold);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 3rem 0 2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid var(--cinema-gold);
+    display: inline-block;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+/* Movie Cards */
+.movie-card {
+    background: var(--cinema-card);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    height: 100%;
+    text-decoration: none !important;
+    display: block;
+    position: relative;
+}
+
+.movie-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0) 0%, rgba(212, 175, 55, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.movie-card:hover {
+    transform: translateY(-15px) scale(1.03);
+    border-color: var(--cinema-gold);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8),
+    0 0 30px rgba(212, 175, 55, 0.3);
+}
+
+.movie-card:hover::before {
+    opacity: 1;
+}
+
+.movie-card img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    transition: all 0.4s ease;
+}
+
+.movie-card:hover img {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+
+.movie-card .card-body {
+    padding: 1.5rem;
+    background: linear-gradient(to top, var(--cinema-darker), var(--cinema-card));
+    position: relative;
+    z-index: 2;
+}
+
+.movie-card .card-title {
+    color: var(--cinema-gold);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.movie-card:hover .card-title {
+    color: var(--cinema-gold-light);
+}
+
+.movie-card .text-muted {
+    color: var(--cinema-gray) !important;
+    font-size: 0.9rem;
+}
+
+/* Movie Detail Page */
+.movie-detail-img {
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    transition: all 0.3s ease;
+}
+
+.movie-detail-img:hover {
+    box-shadow: 0 15px 50px rgba(212, 175, 55, 0.3);
+    border-color: var(--cinema-gold);
+}
+
+.movie-info h2 {
+    color: var(--cinema-gold);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.movie-info p {
+    color: var(--cinema-light);
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+/* Genre Badges */
+.badge {
+    background: rgba(212, 175, 55, 0.2) !important;
+    color: var(--cinema-gold) !important;
+    border: 1px solid var(--cinema-gold);
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.badge:hover {
+    background: var(--cinema-gold) !important;
+    color: var(--cinema-darker) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+}
+
+/* Buttons */
+.btn-danger {
+    background: var(--cinema-red) !important;
+    border: none !important;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(229, 9, 20, 0.3);
+}
+
+.btn-danger:hover {
+    background: var(--cinema-red-hover) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(229, 9, 20, 0.5);
+}
+
+.btn-danger svg {
+    margin-right: 0.5rem;
+}
+
+/* Pagination */
+.pagination {
+    margin-top: 3rem;
+}
+
+.pagination .page-link {
+    background: var(--cinema-card);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--cinema-gold);
+    margin: 0 0.2rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+    background: var(--cinema-gold);
+    color: var(--cinema-darker);
+    border-color: var(--cinema-gold);
+    transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--cinema-gold);
+    color: var(--cinema-darker);
+    border-color: var(--cinema-gold);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+}
+
+/* Container Spacing */
+.container {
+    max-width: 1400px;
+}
+
+/* Admin Section Styles */
+.admin-section h4 {
+    color: var(--cinema-gold);
+    font-weight: 600;
+    margin-bottom: 2rem;
+}
+
+/* Form Styles */
+.form-control, .form-select {
+    background: var(--cinema-card);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--cinema-light);
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background: var(--cinema-card);
+    border-color: var(--cinema-gold);
+    color: var(--cinema-light);
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
+.form-label {
+    color: var(--cinema-gold);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Loading Animation */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.loading {
+    animation: shimmer 2s infinite;
+    background: linear-gradient(
+            to right,
+            var(--cinema-card) 4%,
+            rgba(212, 175, 55, 0.1) 25%,
+            var(--cinema-card) 36%
+    );
+    background-size: 1000px 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 1.5rem;
+    }
+
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+
+    .hero-section h2 {
+        font-size: 1.2rem;
+    }
+
+    .movie-card img {
+        height: 300px;
+    }
+
+    .navbar-brand {
+        font-size: 1.3rem;
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--cinema-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--cinema-gold);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--cinema-gold-light);
+}

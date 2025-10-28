@@ -9,20 +9,27 @@
 <body>
 
 <div layout:fragment="content">
-    <h2>Movies</h2>
+    <h2 class="section-title mb-4">Movie Management</h2>
     <div class="text-end">
-        <a class="btn btn-primary mb-3" href="/admin/movies/new">
-            Add movie </a>
+        <a class="btn btn-danger mb-4" href="/admin/movies/new">
+            <svg class="bi bi-plus-circle" fill="currentColor" height="16" viewBox="0 0 16 16" width="16"
+                 xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            Add Movie
+        </a>
     </div>
-    <table class="table table-hover">
-        <thead>
-        <tr>
-            <th></th>
-            <th>Movie</th>
-            <th>Premiere Date</th>
-            <th></th>
-        </tr>
-        </thead>
+    <div class="table-responsive">
+        <table class="table table-hover table-dark">
+            <thead>
+            <tr>
+                <th></th>
+                <th>Movie</th>
+                <th>Premiere Date</th>
+                <th></th>
+            </tr>
+            </thead>
         <tbody>
         <tr th:each="movie : ${movies}" th:object="${movie}">
             <td style="width:150px;">
@@ -31,26 +38,31 @@
                 </a>
             </td>
             <td>
-                <div class="fs-5 fw-bold" th:text="*{title}"></div>
+                <div class="fs-5 fw-bold" style="color: var(--cinema-gold);" th:text="*{title}"></div>
                 <p th:text="*{sinopsis}"></p>
                 <div>
-							<span class="badge rounded-pill bg-light text-dark me-1"
-                                  th:each="genre : *{genres}" th:text="${genre.title}">
-							</span>
+                    <span class="badge me-1 mb-1"
+                          th:each="genre : *{genres}" th:text="${genre.title}">
+                    </span>
                 </div>
             </td>
             <td th:text="*{#temporals.format(premiereDate,'dd/MM/yyyy')}"></td>
             <td class="text-end">
-                <a th:href="@{/admin/movies/{id}/edit(id=*{id})}">Edit</a>
-                <a class="text-danger ms-3" href="javascript:void(0)"
-                   th:onclick="'deleteMovie(' + *{id} +')'">Delete</a>
+                <a class="btn btn-sm btn-outline-warning me-2" th:href="@{/admin/movies/{id}/edit(id=*{id})}">
+                    Edit
+                </a>
+                <a class="btn btn-sm btn-outline-danger" href="javascript:void(0)"
+                   th:onclick="'deleteMovie(' + *{id} +')'">
+                    Delete
+                </a>
                 <form class="d-none" method="post" th:action="@{/admin/movies/{id}/delete(id=*{id})}"
                       th:id="'deleteMovieForm' + *{id}">
                 </form>
             </td>
         </tr>
         </tbody>
-    </table>
+        </table>
+    </div>
     <div class="row mt-5" th:with="page=${movies}">
         <div class="col-sm-6">
             <div sd:pagination-sumary>

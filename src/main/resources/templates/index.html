@@ -9,16 +9,18 @@
 <body>
 
 <div layout:fragment="content">
-    <div class="bg-light p-5 rounded">
-        <h1 class="display-1 text-success">Welcome to CinemaTrailer</h1>
-        <h2>Enjoy your favorite trailers at no cost</h2>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1 class="display-1">Welcome to CinemaTrailer</h1>
+        <h2>Discover and enjoy the latest movie trailers in stunning quality</h2>
     </div>
 
-    <h4 class="text-danger mt-5">Latest releases</h4>
+    <!-- Latest Releases Section -->
+    <h4 class="section-title">Latest Releases</h4>
 
     <div class="row">
-        <div class="col-md-3 my-5" th:each="movie : ${latestMovies}" th:object="${movie}">
-            <a class="card shadow-lg" style="text-decoration:none;" th:href="@{/movies/{id}(id=*{id})}">
+        <div class="col-md-3 col-sm-6 my-4" th:each="movie : ${latestMovies}" th:object="${movie}">
+            <a class="movie-card" th:href="@{/movies/{id}(id=*{id})}">
                 <img class="card-img-top" th:alt="*{title}" th:src="@{/assets/{filename}(filename=*{routeCover})}">
                 <div class="card-body">
                     <h2 class="card-title fs-6" th:text="*{title}"></h2>

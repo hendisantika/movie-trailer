@@ -9,31 +9,44 @@
 <body>
 
 <div layout:fragment="content" th:object="${movie}">
-    <div class="row">
-        <div class="col-md-6">
-            <img class="img-fluid rounded w-100"
+    <div class="row align-items-center">
+        <div class="col-md-6 mb-4">
+            <img class="movie-detail-img img-fluid w-100"
                  th:alt="*{title}" th:src="@{/assets/{filename}(filename=*{routeCover})}">
         </div>
-        <div class="col-md-6">
-            <div class="text-end my-3">
-                <a
-                        class="btn btn-danger"
-                        data-fancybox=""
-                        th:href="@{https://www.youtube.com/watch?v={youtubeId}(youtubeId=*{youtubeTrailerId})}">
-                    <svg
-                            class="bi bi-film" fill="currentColor" height="16"
-                            viewBox="0 0 16 16" width="16" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                                d="M0 1a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V1zm4 0v6h8V1H4zm8 8H4v6h8V9zM1 1v2h2V1H1zm2 3H1v2h2V4zM1 7v2h2V7H1zm2 3H1v2h2v-2zm-2 3v2h2v-2H1zM15 1h-2v2h2V1zm-2 3v2h2V4h-2zm2 3h-2v2h2V7zm-2 3v2h2v-2h-2zm2 3h-2v2h2v-2z"/>
-                    </svg>
-                    View trailer
-                </a>
-            </div>
+        <div class="col-md-6 movie-info">
             <h2 th:text="*{title}"></h2>
-            <div class="mb-3">
-					<span class="badge rounded-pull bg-light text-dark me-1"
-                          th:each="genre : *{genres}" th:text="${genre.title}"></span>
+
+            <!-- Genre Badges -->
+            <div class="mb-4">
+                <span class="badge me-2 mb-2"
+                      th:each="genre : *{genres}" th:text="${genre.title}"></span>
+            </div>
+
+            <!-- Synopsis -->
+            <div class="mb-4">
                 <p th:text="*{sinopsis}"></p>
+            </div>
+
+            <!-- Premiere Date -->
+            <div class="mb-4">
+                <small class="text-muted">
+                    <strong>Premiere Date:</strong>
+                    <span th:text="*{#temporals.format(premiereDate,'dd MMMM yyyy')}"></span>
+                </small>
+            </div>
+
+            <!-- Watch Trailer Button -->
+            <div class="text-center text-md-start">
+                <a class="btn btn-danger btn-lg"
+                   data-fancybox=""
+                   th:href="@{https://www.youtube.com/watch?v={youtubeId}(youtubeId=*{youtubeTrailerId})}">
+                    <svg class="bi bi-play-circle-fill" fill="currentColor" height="20"
+                         viewBox="0 0 16 16" width="20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814l-3.5-2.5z"/>
+                    </svg>
+                    Watch Trailer
+                </a>
             </div>
         </div>
     </div>
