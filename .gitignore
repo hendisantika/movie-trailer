@@ -32,3 +32,17 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Docker ###
+postgres_data/
+*.env
+!.env.example
+
+### CI/CD ###
+.gitlab-runner/
+gitlab-runner-config/
+*.log
+
+### Assets ###
+assets/
+test-assets/
