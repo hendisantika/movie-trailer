@@ -189,6 +189,14 @@ deploy:staging:auto:
   stage: deploy
   image: alpine:latest
   before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$STAGING_SERVER" ] || [ -z "$STAGING_USER" ]; then
+        echo "⚠️  Deployment requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, STAGING_SERVER, STAGING_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable auto-deployment"
+        exit 0
+      fi
     - apk add --no-cache openssh-client
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
@@ -201,8 +209,8 @@ deploy:staging:auto:
     - |
       ssh $STAGING_USER@$STAGING_SERVER << EOF
         cd /opt/movie-trailer
-        docker-compose pull
-        docker-compose up -d --force-recreate
+        docker compose pull
+        docker compose up -d --force-recreate
         docker image prune -f
       EOF
     - echo "Deployment to staging completed!"
@@ -224,6 +232,14 @@ deploy:complete:auto:
   stage: deploy
   image: alpine:latest
   before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$STAGING_SERVER" ] || [ -z "$STAGING_USER" ]; then
+        echo "⚠️  Deployment requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, STAGING_SERVER, STAGING_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable auto-deployment"
+        exit 0
+      fi
     - apk add --no-cache openssh-client
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
@@ -235,10 +251,12 @@ deploy:complete:auto:
     - echo "Auto-deploying from complete branch..."
     - |
       ssh $STAGING_USER@$STAGING_SERVER << EOF
+      
+        mkdir -p /opt/movie-trailer
         cd /opt/movie-trailer
         export IMAGE_TAG=complete
-        docker-compose pull
-        docker-compose up -d --force-recreate
+        docker compose pull
+        docker compose up -d --force-recreate
         docker image prune -f
       EOF
     - echo "Deployment from complete branch completed!"
@@ -286,6 +304,14 @@ deploy:staging:manual:
   stage: deploy
   image: alpine:latest
   before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$STAGING_SERVER" ] || [ -z "$STAGING_USER" ]; then
+        echo "⚠️  Deployment requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, STAGING_SERVER, STAGING_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable deployment"
+        exit 0
+      fi
     - apk add --no-cache openssh-client
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
@@ -298,8 +324,8 @@ deploy:staging:manual:
     - |
       ssh $STAGING_USER@$STAGING_SERVER << EOF
         cd /opt/movie-trailer
-        docker-compose pull
-        docker-compose up -d --force-recreate
+        docker compose pull
+        docker compose up -d --force-recreate
         docker image prune -f
       EOF
     - echo "Manual deployment to staging completed!"
@@ -319,6 +345,14 @@ deploy:production:
   stage: deploy
   image: alpine:latest
   before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$PRODUCTION_SERVER" ] || [ -z "$PRODUCTION_USER" ]; then
+        echo "⚠️  Deployment requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, PRODUCTION_SERVER, PRODUCTION_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable deployment"
+        exit 0
+      fi
     - apk add --no-cache openssh-client
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
@@ -331,9 +365,9 @@ deploy:production:
     - |
       ssh $PRODUCTION_USER@$PRODUCTION_SERVER << EOF
         cd /opt/movie-trailer
-        docker-compose pull
-        docker-compose down
-        docker-compose up -d
+        docker compose pull
+        docker compose down
+        docker compose up -d
         docker image prune -f
       EOF
     - echo "Deployment to production completed!"
@@ -388,6 +422,14 @@ rollback:production:
   stage: deploy
   image: alpine:latest
   before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$PRODUCTION_SERVER" ] || [ -z "$PRODUCTION_USER" ]; then
+        echo "⚠️  Rollback requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, PRODUCTION_SERVER, PRODUCTION_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable rollback"
+        exit 0
+      fi
     - apk add --no-cache openssh-client
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
@@ -398,8 +440,8 @@ rollback:production:
     - |
       ssh $PRODUCTION_USER@$PRODUCTION_SERVER << EOF
         cd /opt/movie-trailer
-        docker-compose down
-        docker-compose up -d
+        docker compose down
+        docker compose up -d
       EOF
     - echo "Rollback completed!"
   environment:
