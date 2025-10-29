@@ -16,6 +16,7 @@
     <properties>
         <java.version>25</java.version>
         <testcontainers.version>1.20.4</testcontainers.version>
+        <start-class>id.my.hendisantika.movietrailer.MovieTrailerApplication</start-class>
     </properties>
     <dependencies>
         <dependency>
@@ -155,6 +156,7 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <mainClass>id.my.hendisantika.movietrailer.MovieTrailerApplication</mainClass>
                 </configuration>
             </plugin>
             <plugin>
