@@ -184,7 +184,7 @@ package:docker-manual:
 # DEPLOY STAGE
 # ==========================================
 
-# Auto-deploy to staging when pushing to develop branch
+# Auto-deploy to staging when pushing to develop branch (requires SSH setup)
 deploy:staging:auto:
   stage: deploy
   image: alpine:latest
@@ -211,10 +211,11 @@ deploy:staging:auto:
     url: https://staging.movie-trailer.example.com
     auto_stop_in: 7 days
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '($CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "staging") && $SSH_PRIVATE_KEY && $STAGING_SERVER && $STAGING_USER'
       when: on_success
-    - if: '$CI_COMMIT_BRANCH == "staging"'
-      when: on_success
+    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "staging"'
+      when: manual
+  allow_failure: true
   tags:
     - docker
 
@@ -246,8 +247,11 @@ deploy:complete:auto:
     url: https://movie-trailer.example.com
     on_stop: stop:complete
   rules:
-    - if: '$CI_COMMIT_BRANCH == "complete"'
+    - if: '$CI_COMMIT_BRANCH == "complete" && $SSH_PRIVATE_KEY && $STAGING_SERVER && $STAGING_USER'
       when: on_success
+    - if: '$CI_COMMIT_BRANCH == "complete"'
+      when: manual
+  allow_failure: true
   tags:
     - docker
 
@@ -307,6 +311,7 @@ deploy:staging:manual:
       when: manual
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
+  allow_failure: true
   tags:
     - docker
 
@@ -340,6 +345,7 @@ deploy:production:
       when: manual
     - if: '$CI_COMMIT_TAG'
       when: manual
+  allow_failure: true
   tags:
     - docker
 
@@ -370,6 +376,7 @@ deploy:kubernetes:
       when: manual
     - if: '$CI_COMMIT_TAG'
       when: manual
+  allow_failure: true
   tags:
     - docker
 
@@ -401,6 +408,7 @@ rollback:production:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
+  allow_failure: true
   tags:
     - docker
 
