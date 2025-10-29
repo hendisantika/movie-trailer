@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:18.0-alpine3.22
+    container_name: postgres-movie-trailers-prod
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-movie_trailers}
+      POSTGRES_USER: ${POSTGRES_USER:-movieuser}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-movieuser} -d ${POSTGRES_DB:-movie_trailers}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - app-network
+
+  app:
+    image: ${CI_REGISTRY_IMAGE:-movie-trailer}:${IMAGE_TAG:-latest}
+    container_name: movie-trailer-app
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-movie_trailers}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-movieuser}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JAVA_OPTS: "-Xms512m -Xmx1024m -XX:+UseG1GC"
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_assets:/app/assets
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - app-network
+    labels:
+      - "com.movie-trailer.description=Movie Trailer Application"
+      - "com.movie-trailer.version=1.0.0"
+
+  # Optional: Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-movie-trailers
+    restart: always
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - app-network
+    profiles:
+      - with-nginx
+
+volumes:
+  postgres_data:
+    driver: local
+  app_assets:
+    driver: local
+  nginx_logs:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
