@@ -252,7 +252,7 @@ deploy:complete:auto:
     - |
       ssh $STAGING_USER@$STAGING_SERVER << EOF
       
-        mkdir -p /opt/movie-trailer
+        sudo mkdir -p /opt/movie-trailer
         cd /opt/movie-trailer
         export IMAGE_TAG=complete
         docker compose pull
@@ -262,7 +262,7 @@ deploy:complete:auto:
     - echo "Deployment from complete branch completed!"
   environment:
     name: complete
-    url: https://movie-trailer.example.com
+    url: https://movie-trailer.jvm.my.id
     on_stop: stop:complete
   rules:
     - if: '$CI_COMMIT_BRANCH == "complete" && $SSH_PRIVATE_KEY && $STAGING_SERVER && $STAGING_USER'
