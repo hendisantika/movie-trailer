@@ -140,17 +140,8 @@ package:jar:
 package:docker:
   stage: package
   image: maven:3.9-amazoncorretto-25
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-  before_script:
-    - echo "Logging into GitLab Container Registry..."
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - echo "Building Docker image with Jib..."
+    - echo "Building Docker image with Jib (no Docker daemon required)..."
     - |
       mvn $MAVEN_CLI_OPTS compile jib:build \
         -Djib.to.image=$IMAGE_TAG \
