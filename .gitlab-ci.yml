@@ -16,6 +16,7 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
   # Docker image settings
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  IMAGE_TAG2: $CI_REGISTRY_IMAGE:$CI_PIPELINE_IID
   IMAGE_TAG_LATEST: $CI_REGISTRY_IMAGE:latest
 
 # Cache Maven dependencies between jobs
@@ -144,11 +145,11 @@ package:docker:
     - echo "Building Docker image with Jib (no Docker daemon required)..."
     - |
       mvn $MAVEN_CLI_OPTS compile jib:build \
-        -Djib.to.image=$IMAGE_TAG \
+        -Djib.to.image=$IMAGE_TAG2 \
         -Djib.to.tags=$CI_COMMIT_SHORT_SHA,latest \
         -Djib.to.auth.username=$CI_REGISTRY_USER \
         -Djib.to.auth.password=$CI_REGISTRY_PASSWORD
-    - echo "Docker image pushed to $IMAGE_TAG"
+    - echo "Docker image pushed to $IMAGE_TAG2"
   only:
     - main
     - develop
@@ -160,15 +161,17 @@ package:docker:
 # Alternative: Build Docker image without Jib
 package:docker-manual:
   stage: package
-  image: docker:24
+  image: docker:28.5.1-dind-alpine3.22
   services:
-    - docker:24-dind
+    - docker:28.5.1-dind-alpine3.22
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - echo "Building Docker image manually..."
     - docker build -t $IMAGE_TAG -t $IMAGE_TAG_LATEST .
+    - docker build -t $IMAGE_TAG2 -t $IMAGE_TAG_LATEST .
     - docker push $IMAGE_TAG
+    - docker push $IMAGE_TAG2
     - docker push $IMAGE_TAG_LATEST
   when: manual
   only:
@@ -407,9 +410,9 @@ rollback:production:
 
 cleanup:old-images:
   stage: deploy
-  image: docker:24
+  image: docker:28.5.1-alpine3.22
   services:
-    - docker:24-dind
+    - docker:28.5.1-dind-alpine3.22
   script:
     - echo "Cleaning up old Docker images..."
     - docker image prune -a -f --filter "until=720h"
