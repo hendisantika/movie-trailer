@@ -42,6 +42,8 @@ build:
   only:
     - branches
     - tags
+  tags:
+    - docker
 
 # ==========================================
 # TEST STAGE
@@ -65,6 +67,8 @@ test:unit:
   only:
     - branches
     - tags
+  tags:
+    - docker
 
 test:integration:
   stage: test
@@ -93,6 +97,8 @@ test:integration:
   only:
     - branches
     - tags
+  tags:
+    - docker
 
 # Code quality check
 code:quality:
@@ -105,6 +111,8 @@ code:quality:
   only:
     - branches
     - tags
+  tags:
+    - docker
 
 # ==========================================
 # PACKAGE STAGE
@@ -125,6 +133,8 @@ package:jar:
     - complete
     - develop
     - tags
+  tags:
+    - docker
 
 package:docker:
   stage: package
@@ -152,6 +162,8 @@ package:docker:
     - develop
     - complete
     - tags
+  tags:
+    - docker
 
 # Alternative: Build Docker image without Jib
 package:docker-manual:
@@ -170,6 +182,8 @@ package:docker-manual:
   only:
     - main
     - tags
+  tags:
+    - docker
 
 # ==========================================
 # DEPLOY STAGE
@@ -206,6 +220,8 @@ deploy:staging:auto:
       when: on_success
     - if: '$CI_COMMIT_BRANCH == "staging"'
       when: on_success
+  tags:
+    - docker
 
 # Auto-deploy when pushing to 'complete' branch
 deploy:complete:auto:
@@ -232,11 +248,13 @@ deploy:complete:auto:
     - echo "Deployment from complete branch completed!"
   environment:
     name: complete
-    url: https://movie-trailer.jvm.my.id
+    url: https://movie-trailer.example.com
     on_stop: stop:complete
   rules:
     - if: '$CI_COMMIT_BRANCH == "complete"'
       when: on_success
+  tags:
+    - docker
 
 # Stop complete environment
 stop:complete:
@@ -261,6 +279,8 @@ stop:complete:
   rules:
     - if: '$CI_COMMIT_BRANCH == "complete"'
       when: manual
+  tags:
+    - docker
 
 # Manual staging deployment (backup option)
 deploy:staging:manual:
@@ -292,6 +312,8 @@ deploy:staging:manual:
       when: manual
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
+  tags:
+    - docker
 
 deploy:production:
   stage: deploy
@@ -323,6 +345,8 @@ deploy:production:
       when: manual
     - if: '$CI_COMMIT_TAG'
       when: manual
+  tags:
+    - docker
 
 # ==========================================
 # KUBERNETES DEPLOYMENT (Optional)
@@ -351,6 +375,8 @@ deploy:kubernetes:
       when: manual
     - if: '$CI_COMMIT_TAG'
       when: manual
+  tags:
+    - docker
 
 # ==========================================
 # ROLLBACK JOB
@@ -380,6 +406,8 @@ rollback:production:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
+  tags:
+    - docker
 
 # ==========================================
 # CLEANUP JOBS
@@ -394,3 +422,5 @@ cleanup:old-images:
     - echo "Cleaning up old Docker images..."
     - docker image prune -a -f --filter "until=720h"
   when: manual
+  tags:
+    - docker
