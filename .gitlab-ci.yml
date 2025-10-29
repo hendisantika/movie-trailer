@@ -209,7 +209,7 @@ deploy:staging:auto:
     - |
       ssh $STAGING_USER@$STAGING_SERVER << EOF
         cd /opt/movie-trailer
-        docker compose pull
+        docker compose pull $IMAGE_TAG2
         docker compose up -d --force-recreate
         docker image prune -f
       EOF
