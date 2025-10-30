@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -78,7 +79,8 @@ public class AdminController {
 
     @GetMapping("/movies/{id}/edit")
     public ModelAndView showMovieEditForm(@PathVariable Integer id) {
-        Movie movie = movieRepository.findById(id).get();
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Movie not found with id: " + id));
         List<Genre> genres = genreRepository.findAll(Sort.by("title"));
 
         return new ModelAndView("admin/edit-movie")
@@ -87,6 +89,7 @@ public class AdminController {
     }
 
     @PostMapping("/movies/{id}/edit")
+    @Transactional
     public ModelAndView updateMovie(@PathVariable Integer id, @Validated Movie movie, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             List<Genre> genres = genreRepository.findAll(Sort.by("title"));
@@ -95,7 +98,8 @@ public class AdminController {
                     .addObject("genres", genres);
         }
 
-        Movie movieDB = movieRepository.getById(id);
+        Movie movieDB = movieRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Movie not found with id: " + id));
         movieDB.setTitle(movie.getTitle());
         movieDB.setSinopsis(movie.getSinopsis());
         movieDB.setPremiereDate(movie.getPremiereDate());
@@ -113,10 +117,18 @@ public class AdminController {
     }
 
     @PostMapping("/movies/{id}/delete")
+    @Transactional
     public String deleteMovie(@PathVariable Integer id) {
-        Movie movie = movieRepository.getById(id);
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Movie not found with id: " + id));
+
+        String coverPath = movie.getRouteCover();
         movieRepository.delete(movie);
-        warehouseService.deleteArchive(movie.getRouteCover());
+
+        // Delete the cover image after successful deletion from database
+        if (coverPath != null && !coverPath.startsWith("http")) {
+            warehouseService.deleteArchive(coverPath);
+        }
 
         return "redirect:/admin";
     }
