@@ -335,7 +335,7 @@ deploy dev:
     - chmod 700 ~/.ssh
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - ssh $USER_DEV@$SERVER_DEV "[ -d ~/movie-trailer ] || mkdir ~/movie-trailer"
-    - rsync -avuz $CI_PROJECT_DIR/.dev.env $USER_DEV@$SERVER_DEV:~/movie-trailer/.env
+    - rsync -avuz $CI_PROJECT_DIR/.env $USER_DEV@$SERVER_DEV:~/movie-trailer/.env
     - rsync -avuz $CI_PROJECT_DIR/docker/docker-compose-dev.yml $USER_DEV@$SERVER_DEV:~/movie-trailer/docker-compose.yml
   script:
     - pwd

@@ -6,7 +6,6 @@ services:
     volumes:
       - ./docker-data/movie-trailer/logs:/home/deployer/movie-trailer/logs:rw
       - ./docker-data/.env:/home/deployer/movie-trailer/.env
-      - ./docker-data/movie-trailer/csv:/tmp/csv:rw
       - ./.env:/home/deployer/movie-trailer/.env
     ports:
       - "${APP_PORT:-8080}:8080"
