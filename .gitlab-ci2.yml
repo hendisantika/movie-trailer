@@ -1,0 +1,527 @@
+# GitLab CI/CD Pipeline for Movie Trailer Application
+# Spring Boot + PostgreSQL + Docker
+
+# Define pipeline stages
+stages:
+  - build
+  - test
+  - package
+  - deploy
+
+# Global variables
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  # Docker image settings
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  IMAGE_TAG2: $CI_REGISTRY_IMAGE:$CI_PIPELINE_IID
+  IMAGE_TAG_LATEST: $CI_REGISTRY_IMAGE:latest
+
+# Cache Maven dependencies between jobs
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .m2/repository/
+    - target/
+
+# ==========================================
+# BUILD STAGE
+# ==========================================
+
+build:
+  stage: build
+  image: maven:3.9-amazoncorretto-25
+  script:
+    - echo "Building application..."
+    - mvn $MAVEN_CLI_OPTS clean compile
+  artifacts:
+    paths:
+      - target/classes/
+    expire_in: 1 hour
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# ==========================================
+# TEST STAGE
+# ==========================================
+
+test:unit:
+  stage: test
+  image: maven:3.9-amazoncorretto-25
+  services:
+    - name: docker:28.5.1-dind-alpine3.22
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+    TESTCONTAINERS_RYUK_DISABLED: "true"
+  before_script:
+    # Wait for Docker to be ready
+    - until docker info >/dev/null 2>&1; do echo "Waiting for Docker..."; sleep 1; done
+    - echo "Docker is ready!"
+  script:
+    - echo "Running unit tests with Testcontainers..."
+    - mvn $MAVEN_CLI_OPTS test -Dspring.profiles.active=test
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+    paths:
+      - target/surefire-reports/
+    expire_in: 7 days
+  coverage: '/Total.*?([0-9]{1,3})%/'
+  only:
+    - complete
+    - branches
+    - tags
+  tags:
+    - docker
+
+test:integration:
+  stage: test
+  image: maven:3.9-amazoncorretto-25
+  services:
+    - name: docker:28.5.1-dind-alpine3.22
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+    TESTCONTAINERS_RYUK_DISABLED: "true"
+  before_script:
+    # Wait for Docker to be ready
+    - until docker info >/dev/null 2>&1; do echo "Waiting for Docker..."; sleep 1; done
+    - echo "Docker is ready!"
+  script:
+    - echo "Running integration tests with Testcontainers..."
+    - echo "Checking for integration tests..."
+    - |
+      if find src/test/java -name "*IT.java" -o -name "*Test.java" 2>/dev/null | grep -q .; then
+        echo "Found test files, running tests..."
+        mvn $MAVEN_CLI_OPTS test -Dspring.profiles.active=test
+        echo "Integration tests completed!"
+      else
+        echo "No test files found - skipping"
+        mkdir -p target/surefire-reports
+        exit 0
+      fi
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+    paths:
+      - target/surefire-reports/
+    expire_in: 7 days
+  allow_failure: false
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# Code quality check
+code:quality:
+  stage: test
+  image: maven:3.9-amazoncorretto-25
+  script:
+    - echo "Running code quality checks..."
+    - mvn $MAVEN_CLI_OPTS checkstyle:check || true
+  allow_failure: true
+  only:
+    - branches
+    - tags
+  tags:
+    - docker
+
+# ==========================================
+# PACKAGE STAGE
+# ==========================================
+
+package:jar:
+  stage: package
+  image: maven:3.9-amazoncorretto-25
+  script:
+    - echo "Packaging application as JAR..."
+    - mvn $MAVEN_CLI_OPTS package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 30 days
+  only:
+    - main
+    - complete
+    - develop
+    - tags
+  tags:
+    - docker
+
+package:docker:
+  stage: package
+  image: maven:3.9-amazoncorretto-25
+  script:
+    - echo "Building Docker image with Jib (no Docker daemon required)..."
+    - |
+      mvn $MAVEN_CLI_OPTS compile jib:build \
+        -Djib.to.image=$IMAGE_TAG2 \
+        -Djib.to.tags=$CI_COMMIT_SHORT_SHA,latest \
+        -Djib.to.auth.username=$CI_REGISTRY_USER \
+        -Djib.to.auth.password=$CI_REGISTRY_PASSWORD
+    - echo "Docker image pushed to $IMAGE_TAG2"
+  only:
+    - main
+    - develop
+    - complete
+    - tags
+  tags:
+    - docker
+
+# Alternative: Build Docker image without Jib
+package:docker-manual:
+  stage: package
+  image: docker:28.5.1-dind-alpine3.22
+  services:
+    - docker:28.5.1-dind-alpine3.22
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - echo "Building Docker image manually..."
+    - docker build -t $IMAGE_TAG -t $IMAGE_TAG_LATEST .
+    - docker build -t $IMAGE_TAG2 -t $IMAGE_TAG_LATEST .
+    - docker push $IMAGE_TAG
+    - docker push $IMAGE_TAG2
+    - docker push $IMAGE_TAG_LATEST
+  when: manual
+  only:
+    - main
+    - tags
+  tags:
+    - docker
+
+# ==========================================
+# DEPLOY STAGE
+# ==========================================
+
+# Auto-deploy to staging when pushing to develop branch (requires SSH setup)
+deploy:staging:auto:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$STAGING_SERVER" ] || [ -z "$STAGING_USER" ]; then
+        echo "⚠️  Deployment requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, STAGING_SERVER, STAGING_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable auto-deployment"
+        exit 0
+      fi
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $STAGING_SERVER >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "Auto-deploying to staging environment..."
+    - |
+      ssh $STAGING_USER@$STAGING_SERVER << EOF
+        cd /opt/movie-trailer
+        docker compose pull $IMAGE_TAG2
+        docker compose up -d --force-recreate
+        docker image prune -f
+      EOF
+    - echo "Deployment to staging completed!"
+  environment:
+    name: staging
+    url: https://staging.movie-trailer.example.com
+    auto_stop_in: 7 days
+  rules:
+    - if: '($CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "staging") && $SSH_PRIVATE_KEY && $STAGING_SERVER && $STAGING_USER'
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "staging"'
+      when: manual
+  allow_failure: true
+  tags:
+    - docker
+
+# Auto-deploy when pushing to 'complete' branch
+deploy:complete:auto:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$STAGING_SERVER" ] || [ -z "$STAGING_USER" ]; then
+        echo "⚠️  Deployment requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, STAGING_SERVER, STAGING_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable auto-deployment"
+        exit 0
+      fi
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $STAGING_SERVER >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "Auto-deploying from complete branch with IMAGE_TAG2..."
+    - echo "Using image tag $IMAGE_TAG2"
+    - |
+      ssh $STAGING_USER@$STAGING_SERVER bash -s << EOF
+        sudo mkdir -p /opt/movie-trailer
+        cd /opt/movie-trailer
+        export IMAGE_TAG=$IMAGE_TAG2
+        echo "Pulling Docker image: \$IMAGE_TAG"
+        docker pull $IMAGE_TAG
+
+        echo "Creating Docker network if it doesn't exist..."
+        docker network create movie-trailer_app-network 2>/dev/null || echo "Network already exists"
+
+        echo "Stopping and removing old app container if exists..."
+        docker stop movie-trailer-app 2>/dev/null || true
+        docker rm movie-trailer-app 2>/dev/null || true
+
+        echo "Starting movie-trailer container with IMAGE_TAG=\$IMAGE_TAG"
+        docker run -d \
+          --name movie-trailer-app \
+          --restart always \
+          -p 8080:8080 \
+          -e SPRING_PROFILES_ACTIVE=prod \
+          -e SPRING_DATASOURCE_URL=\${SPRING_DATASOURCE_URL} \
+          -e SPRING_DATASOURCE_USERNAME=\${SPRING_DATASOURCE_USERNAME} \
+          -e SPRING_DATASOURCE_PASSWORD=\${SPRING_DATASOURCE_PASSWORD} \
+          -e JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC" \
+          -v app_assets:/app/assets \
+          --network movie-trailer_app-network \
+          $IMAGE_TAG
+
+        echo "Cleaning up unused images..."
+        docker image prune -f
+
+        echo "Running container on VM server:"
+        docker ps --filter "name=movie-trailer-app" --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+
+        echo "Container logs (last 20 lines):"
+        docker logs --tail=20 movie-trailer-app
+      EOF
+    - echo "Deployment from complete branch completed!"
+  environment:
+    name: complete
+    url: https://movie-trailer.jvm.my.id
+    on_stop: stop:complete
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "complete" && $SSH_PRIVATE_KEY && $STAGING_SERVER && $STAGING_USER'
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH == "complete"'
+      when: manual
+  allow_failure: true
+  tags:
+    - docker
+
+# Stop complete environment
+stop:complete:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+  script:
+    - echo "Stopping complete environment..."
+    - |
+      ssh $STAGING_USER@$STAGING_SERVER << EOF
+        cd /opt/movie-trailer
+        docker-compose down
+      EOF
+  environment:
+    name: complete
+    action: stop
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "complete"'
+      when: manual
+  tags:
+    - docker
+
+# Manual staging deployment (backup option)
+deploy:staging:manual:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$STAGING_SERVER" ] || [ -z "$STAGING_USER" ]; then
+        echo "⚠️  Deployment requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, STAGING_SERVER, STAGING_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable deployment"
+        exit 0
+      fi
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $STAGING_SERVER >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "Manually deploying to staging environment..."
+    - |
+      ssh $STAGING_USER@$STAGING_SERVER << EOF
+        cd /opt/movie-trailer
+        docker compose pull
+        docker compose up -d --force-recreate
+        docker image prune -f
+      EOF
+    - echo "Manual deployment to staging completed!"
+  environment:
+    name: staging
+    url: https://staging.movie-trailer.example.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: manual
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+  allow_failure: true
+  tags:
+    - docker
+
+deploy:production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$PRODUCTION_SERVER" ] || [ -z "$PRODUCTION_USER" ]; then
+        echo "⚠️  Deployment requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, PRODUCTION_SERVER, PRODUCTION_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable deployment"
+        exit 0
+      fi
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $PRODUCTION_SERVER >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "Deploying to production environment..."
+    - |
+      ssh $PRODUCTION_USER@$PRODUCTION_SERVER << EOF
+        cd /opt/movie-trailer
+        docker compose pull
+        docker compose down
+        docker compose up -d
+        docker image prune -f
+      EOF
+    - echo "Deployment to production completed!"
+  environment:
+    name: production
+    url: https://movie-trailer.example.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+    - if: '$CI_COMMIT_TAG'
+      when: manual
+  allow_failure: true
+  tags:
+    - docker
+
+# ==========================================
+# KUBERNETES DEPLOYMENT (Optional)
+# ==========================================
+
+deploy:kubernetes:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - echo "Deploying to Kubernetes..."
+    - kubectl config set-cluster k8s --server="$KUBE_URL" --insecure-skip-tls-verify=true
+    - kubectl config set-credentials admin --token="$KUBE_TOKEN"
+    - kubectl config set-context default --cluster=k8s --user=admin
+    - kubectl config use-context default
+    - |
+      kubectl set image deployment/movie-trailer \
+        movie-trailer=$IMAGE_TAG \
+        --namespace=$KUBE_NAMESPACE
+    - kubectl rollout status deployment/movie-trailer --namespace=$KUBE_NAMESPACE
+    - echo "Kubernetes deployment completed!"
+  environment:
+    name: kubernetes-prod
+    url: https://k8s.movie-trailer.example.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+    - if: '$CI_COMMIT_TAG'
+      when: manual
+  allow_failure: true
+  tags:
+    - docker
+
+# ==========================================
+# ROLLBACK JOB
+# ==========================================
+
+rollback:production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - |
+      # Validate required variables first
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$PRODUCTION_SERVER" ] || [ -z "$PRODUCTION_USER" ]; then
+        echo "⚠️  Rollback requires configuration"
+        echo "   Missing one or more of: SSH_PRIVATE_KEY, PRODUCTION_SERVER, PRODUCTION_USER"
+        echo "   Configure these in Settings → CI/CD → Variables to enable rollback"
+        exit 0
+      fi
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+  script:
+    - echo "Rolling back production deployment..."
+    - |
+      ssh $PRODUCTION_USER@$PRODUCTION_SERVER << EOF
+        cd /opt/movie-trailer
+        docker compose down
+        docker compose up -d
+      EOF
+    - echo "Rollback completed!"
+  environment:
+    name: production-rollback
+    url: https://movie-trailer.example.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+  allow_failure: true
+  tags:
+    - docker
+
+# ==========================================
+# CLEANUP JOBS
+# ==========================================
+
+cleanup:old-images:
+  stage: deploy
+  image: docker:28.5.1-alpine3.22
+  services:
+    - docker:28.5.1-dind-alpine3.22
+  script:
+    - echo "Cleaning up old Docker images..."
+    - docker image prune -a -f --filter "until=720h"
+  when: manual
+  tags:
+    - docker
