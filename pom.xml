@@ -15,7 +15,7 @@
     <description>movie-trailer</description>
     <properties>
         <java.version>25</java.version>
-        <testcontainers.version>1.20.4</testcontainers.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
         <start-class>id.my.hendisantika.movietrailer.MovieTrailerApplication</start-class>
     </properties>
     <dependencies>
