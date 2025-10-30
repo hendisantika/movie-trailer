@@ -3,7 +3,14 @@ image: 28.4.0-alpine3.22
 services:
   - docker:dind
 
+# Global variables
 variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
+  # Docker image settings
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  IMAGE_TAG2: $CI_REGISTRY_IMAGE:$CI_PIPELINE_IID
+  IMAGE_TAG_LATEST: $CI_REGISTRY_IMAGE:latest
   # Instruct Testcontainers to use the daemon of DinD.
   DOCKER_HOST: "tcp://docker:2375"
   # Instruct Docker not to start over TLS.
@@ -13,10 +20,22 @@ variables:
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
+# Cache Maven dependencies between jobs
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .m2/repository/
+    - target/
+
+# ==========================================
+# BUILD STAGE
+# ==========================================
+
 stages:
   - test
   - sonarqube
   - qodana
+  - package
   - build jar
   - build prod jar
   - build and push docker image
@@ -85,6 +104,44 @@ build:
   only:
     - complete
     - main
+
+package:jar:
+  stage: package
+  image: maven:3.9-amazoncorretto-25
+  script:
+    - echo "Packaging application as JAR..."
+    - mvn $MAVEN_CLI_OPTS package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 30 days
+  only:
+    - main
+    - complete
+    - develop
+    - tags
+  tags:
+    - docker
+
+package:docker:
+  stage: package
+  image: maven:3.9-amazoncorretto-25
+  script:
+    - echo "Building Docker image with Jib (no Docker daemon required)..."
+    - |
+      mvn $MAVEN_CLI_OPTS compile jib:build \
+        -Djib.to.image=$IMAGE_TAG2 \
+        -Djib.to.tags=$CI_COMMIT_SHORT_SHA,latest \
+        -Djib.to.auth.username=$CI_REGISTRY_USER \
+        -Djib.to.auth.password=$CI_REGISTRY_PASSWORD
+    - echo "Docker image pushed to $IMAGE_TAG2"
+  only:
+    - main
+    - develop
+    - complete
+    - tags
+  tags:
+    - docker
 
 build prod:
   image: docker:28.4.0-alpine3.22
