@@ -104,7 +104,7 @@ jobs:
         uses: jwalton/gh-ecr-push@v2
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_ACCESS_SECRET_KEY }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ secrets.AWS_REGION }}
           local-image: movie-service:$IMAGE_TAG
           image: movie-service:$IMAGE_TAG, movie-service:latest
