@@ -187,7 +187,7 @@ docker build:
   script:
     # - $(aws ecr get-login --region ap-southeast-1)
     - aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin $ECR_URL
-    - docker build -t $REPOSITORY_URL:$CI_PIPELINE_IID -f ./docker/Dockerfile .
+    - docker build -t $REPOSITORY_URL:$CI_PIPELINE_IID .
     - docker push $REPOSITORY_URL:$CI_PIPELINE_IID
   only:
     - complete
@@ -209,7 +209,7 @@ docker build prod:
     - apk add --no-cache curl jq aws-cli
   script:
     - aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin $ECR_URL
-    - docker build --network host -f docker/Dockerfile -t $REPOSITORY_URL:$CI_COMMIT_REF_NAME .
+    - docker build --network host -t $REPOSITORY_URL:$CI_COMMIT_REF_NAME .
     - docker push $REPOSITORY_URL:$CI_COMMIT_REF_NAME
 
 docker push to docker hub:
