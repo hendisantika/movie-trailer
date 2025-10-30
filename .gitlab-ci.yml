@@ -258,11 +258,36 @@ deploy:complete:auto:
         export SPRING_DATASOURCE_URL=\${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/movie_trailers}
         export SPRING_DATASOURCE_USERNAME=\${SPRING_DATASOURCE_USERNAME:-movieuser}
         export SPRING_DATASOURCE_PASSWORD=\${SPRING_DATASOURCE_PASSWORD:-changeme}
+        echo "Pulling Docker image: \$IMAGE_TAG"
+        docker pull $IMAGE_TAG
+
+        echo "Stopping and removing old container if exists..."
+        docker stop movie-trailer-app 2>/dev/null || true
+        docker rm movie-trailer-app 2>/dev/null || true
+
+        echo "Starting movie-trailer container with IMAGE_TAG=\$IMAGE_TAG"
+        docker run -d \
+          --name movie-trailer-app \
+          --restart always \
+          -p 8080:8080 \
+          -e SPRING_PROFILES_ACTIVE=prod \
+          -e SPRING_DATASOURCE_URL=\${SPRING_DATASOURCE_URL} \
+          -e SPRING_DATASOURCE_USERNAME=\${SPRING_DATASOURCE_USERNAME} \
+          -e SPRING_DATASOURCE_PASSWORD=\${SPRING_DATASOURCE_PASSWORD} \
+          -e JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC" \
+          -v /opt/movie-trailer/assets:/app/assets \
+          --network movie-trailer_app-network \
+          $IMAGE_TAG
+
+        echo "Cleaning up unused images..."
         docker image prune -f
-        docker compose pull $IMAGE_TAG
-        docker compose up -d --force-recreate
+
+        echo "Running container on VM server:"
+        docker ps --filter "name=movie-trailer-app" --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+
+        echo "Container logs (last 20 lines):"
+        docker logs --tail=20 movie-trailer-app
       EOF
-    - docker ps
     - echo "Deployment from complete branch completed!"
   environment:
     name: complete
