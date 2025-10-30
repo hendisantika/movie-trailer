@@ -1,0 +1,23 @@
+services:
+  persis-service:
+    container_name: ${APP_NAME:-movie-trailer}
+    image: ${REPOSITORY_URL:-movie-trailer}:${TAG_NUMBER:-latest}
+    restart: always
+    volumes:
+      - ./docker-data/movie-trailer/logs:/home/deployer/movie-trailer/logs:rw
+      - ./docker-data/.env:/home/deployer/movie-trailer/.env
+      - ./docker-data/movie-trailer/csv:/tmp/csv:rw
+      - ./.env:/home/deployer/movie-trailer/.env
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    env_file:
+      - ~/movie-trailer/.env
+    environment:
+      - "SPRING_PROFILES_ACTIVE=dev"
+      - "JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC -XX:+UseContainerSupport"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
