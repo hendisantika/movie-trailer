@@ -25,8 +25,8 @@ stages:
   - deploy prod
 
 test_job:
-  image: maven:3.9.11-amazoncorretto-25-alpine
   stage: test
+  image: maven:3.9.11-amazoncorretto-25-alpine
   before_script:
     - export MAX_LOG_SIZE=52428800 # Set log size limit to 50MB
   script:
@@ -34,6 +34,7 @@ test_job:
     - mvn clean compile test
   only:
     - merge_requests
+    - complete
 
 #sonarqube:
 #  image: maven:3.9.11-amazoncorretto-25-alpine
@@ -82,6 +83,7 @@ build:
     paths:
       - target/*.jar
   only:
+    - complete
     - main
 
 build prod:
@@ -131,6 +133,7 @@ docker build:
     - docker build -t $REPOSITORY_URL:$CI_PIPELINE_IID -f ./docker/Dockerfile .
     - docker push $REPOSITORY_URL:$CI_PIPELINE_IID
   only:
+    - complete
     - main
 
 docker build prod:
@@ -174,6 +177,7 @@ deploy dev:
     - pwd
     - ssh $USER_DEV@$SERVER_DEV "eval aws ecr get-login-password --region ap-southeast-1 | docker login --username $ECR_USERNAME --password-stdin $ECR_URL; cd /opt/movie-trailer; docker compose --env-file .env -f docker-compose.yml down; docker system prune -af; docker pull $REPOSITORY_ECR_URL:$CI_PIPELINE_IID; docker compose --env-file .env -f docker-compose.yml up -d"
   only:
+    - complete
     - main
 
 deploy prod:
