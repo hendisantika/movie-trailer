@@ -258,10 +258,11 @@ deploy:complete:auto:
         export SPRING_DATASOURCE_URL=\${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/movie_trailers}
         export SPRING_DATASOURCE_USERNAME=\${SPRING_DATASOURCE_USERNAME:-movieuser}
         export SPRING_DATASOURCE_PASSWORD=\${SPRING_DATASOURCE_PASSWORD:-changeme}
-        docker compose pull
-        docker compose up -d --force-recreate
         docker image prune -f
+        docker compose pull $IMAGE_TAG
+        docker compose up -d --force-recreate
       EOF
+    - docker ps
     - echo "Deployment from complete branch completed!"
   environment:
     name: complete
