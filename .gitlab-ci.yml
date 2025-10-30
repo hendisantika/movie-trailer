@@ -255,13 +255,13 @@ deploy:complete:auto:
         sudo mkdir -p /opt/movie-trailer
         cd /opt/movie-trailer
         export IMAGE_TAG=$IMAGE_TAG2
-        export SPRING_DATASOURCE_URL=\${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/movie_trailers}
-        export SPRING_DATASOURCE_USERNAME=\${SPRING_DATASOURCE_USERNAME:-movieuser}
-        export SPRING_DATASOURCE_PASSWORD=\${SPRING_DATASOURCE_PASSWORD:-changeme}
         echo "Pulling Docker image: \$IMAGE_TAG"
         docker pull $IMAGE_TAG
 
-        echo "Stopping and removing old container if exists..."
+        echo "Creating Docker network if it doesn't exist..."
+        docker network create movie-trailer_app-network 2>/dev/null || echo "Network already exists"
+
+        echo "Stopping and removing old app container if exists..."
         docker stop movie-trailer-app 2>/dev/null || true
         docker rm movie-trailer-app 2>/dev/null || true
 
@@ -275,7 +275,7 @@ deploy:complete:auto:
           -e SPRING_DATASOURCE_USERNAME=\${SPRING_DATASOURCE_USERNAME} \
           -e SPRING_DATASOURCE_PASSWORD=\${SPRING_DATASOURCE_PASSWORD} \
           -e JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC" \
-          -v /opt/movie-trailer/assets:/app/assets \
+          -v app_assets:/app/assets \
           --network movie-trailer_app-network \
           $IMAGE_TAG
 
