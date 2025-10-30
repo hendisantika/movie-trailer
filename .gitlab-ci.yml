@@ -249,14 +249,32 @@ docker push to docker hub:
   services:
     - docker:28-dind
   before_script:
-    - echo "Logging into Docker Hub..."
+    - |
+      # Validate Docker Hub credentials
+      if [ -z "$DOCKER_HUB_USERNAME" ]; then
+        echo "ERROR: DOCKER_HUB_USERNAME is not set!"
+        echo "Please add DOCKER_HUB_USERNAME to GitLab CI/CD Variables"
+        exit 1
+      fi
+      if [ -z "$DOCKER_HUB_PASSWORD" ]; then
+        echo "ERROR: DOCKER_HUB_PASSWORD is not set!"
+        echo "Please add DOCKER_HUB_PASSWORD to GitLab CI/CD Variables"
+        exit 1
+      fi
+    - echo "Logging into Docker Hub as $DOCKER_HUB_USERNAME..."
     - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+    - echo "Docker Hub login successful!"
   script:
     - echo "Building Docker image for Docker Hub..."
-    - docker build -t $DOCKER_HUB_USERNAME/movie-trailer:$CI_PIPELINE_IID -f .
+    - docker build -t $DOCKER_HUB_USERNAME/movie-trailer:$CI_PIPELINE_IID .
+    - docker tag $DOCKER_HUB_USERNAME/movie-trailer:$CI_PIPELINE_IID $DOCKER_HUB_USERNAME/movie-trailer:latest
     - echo "Pushing to Docker Hub..."
     - docker push $DOCKER_HUB_USERNAME/movie-trailer:$CI_PIPELINE_IID
+    - docker push $DOCKER_HUB_USERNAME/movie-trailer:latest
     - echo "Successfully pushed to Docker Hub!"
+    - echo "Images available at:"
+    - echo "  - docker pull $DOCKER_HUB_USERNAME/movie-trailer:$CI_PIPELINE_IID"
+    - echo "  - docker pull $DOCKER_HUB_USERNAME/movie-trailer:latest"
   only:
     - complete
     - main
@@ -271,15 +289,32 @@ docker push to docker hub prod:
   services:
     - docker:28-dind
   before_script:
-    - echo "Logging into Docker Hub..."
+    - |
+      # Validate Docker Hub credentials
+      if [ -z "$DOCKER_HUB_USERNAME" ]; then
+        echo "ERROR: DOCKER_HUB_USERNAME is not set!"
+        echo "Please add DOCKER_HUB_USERNAME to GitLab CI/CD Variables"
+        exit 1
+      fi
+      if [ -z "$DOCKER_HUB_PASSWORD" ]; then
+        echo "ERROR: DOCKER_HUB_PASSWORD is not set!"
+        echo "Please add DOCKER_HUB_PASSWORD to GitLab CI/CD Variables"
+        exit 1
+      fi
+    - echo "Logging into Docker Hub as $DOCKER_HUB_USERNAME..."
     - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+    - echo "Docker Hub login successful!"
   script:
     - echo "Building production Docker image for Docker Hub..."
-    - docker build --network host -f docker/Dockerfile -t $DOCKER_HUB_USERNAME/movie-trailer:$CI_COMMIT_REF_NAME -t $DOCKER_HUB_USERNAME/movie-trailer:production .
+    - docker build --network host -t $DOCKER_HUB_USERNAME/movie-trailer:$CI_COMMIT_REF_NAME .
+    - docker tag $DOCKER_HUB_USERNAME/movie-trailer:$CI_COMMIT_REF_NAME $DOCKER_HUB_USERNAME/movie-trailer:production
     - echo "Pushing production image to Docker Hub..."
     - docker push $DOCKER_HUB_USERNAME/movie-trailer:$CI_COMMIT_REF_NAME
     - docker push $DOCKER_HUB_USERNAME/movie-trailer:production
     - echo "Successfully pushed production image to Docker Hub!"
+    - echo "Images available at:"
+    - echo "  - docker pull $DOCKER_HUB_USERNAME/movie-trailer:$CI_COMMIT_REF_NAME"
+    - echo "  - docker pull $DOCKER_HUB_USERNAME/movie-trailer:production"
   only:
     - /-RELEASE$/
   allow_failure: false
