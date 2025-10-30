@@ -53,9 +53,22 @@ build:
 test:unit:
   stage: test
   image: maven:3.9-amazoncorretto-25
+  services:
+    - name: docker:28.5.1-dind-alpine3.22
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+    TESTCONTAINERS_RYUK_DISABLED: "true"
+  before_script:
+    # Wait for Docker to be ready
+    - until docker info >/dev/null 2>&1; do echo "Waiting for Docker..."; sleep 1; done
+    - echo "Docker is ready!"
   script:
-    - echo "Running unit tests..."
-    - mvn $MAVEN_CLI_OPTS test
+    - echo "Running unit tests with Testcontainers..."
+    - mvn $MAVEN_CLI_OPTS test -Dspring.profiles.active=test
   artifacts:
     when: always
     reports:
