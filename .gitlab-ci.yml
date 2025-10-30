@@ -131,7 +131,7 @@ package:docker:
     - |
       mvn $MAVEN_CLI_OPTS compile jib:build \
         -Djib.to.image=$IMAGE_TAG2 \
-        -Djib.to.tags=$CI_COMMIT_SHORT_SHA,latest \
+        -Djib.to.tags=$CI_COMMIT_SHORT_SHA,$CI_PIPELINE_IID,latest \
         -Djib.to.auth.username=$CI_REGISTRY_USER \
         -Djib.to.auth.password=$CI_REGISTRY_PASSWORD
     - echo "Docker image pushed to $IMAGE_TAG2"
@@ -222,11 +222,9 @@ docker push to docker hub:
     - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
   script:
     - echo "Building Docker image for Docker Hub..."
-    - docker build -t $DOCKER_HUB_USERNAME/movie-trailer:$CI_PIPELINE_IID -f ./docker/Dockerfile .
-    - docker build -t $DOCKER_HUB_USERNAME/movie-trailer:latest -f ./docker/Dockerfile .
+    - docker build -t $DOCKER_HUB_USERNAME/movie-trailer:$CI_PIPELINE_IID -f .
     - echo "Pushing to Docker Hub..."
     - docker push $DOCKER_HUB_USERNAME/movie-trailer:$CI_PIPELINE_IID
-    - docker push $DOCKER_HUB_USERNAME/movie-trailer:latest
     - echo "Successfully pushed to Docker Hub!"
   only:
     - complete

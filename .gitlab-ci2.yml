@@ -173,7 +173,7 @@ package:docker:
     - |
       mvn $MAVEN_CLI_OPTS compile jib:build \
         -Djib.to.image=$IMAGE_TAG2 \
-        -Djib.to.tags=$CI_COMMIT_SHORT_SHA,latest \
+        -Djib.to.tags=$CI_COMMIT_SHORT_SHA,$CI_PIPELINE_IID,latest \
         -Djib.to.auth.username=$CI_REGISTRY_USER \
         -Djib.to.auth.password=$CI_REGISTRY_PASSWORD
     - echo "Docker image pushed to $IMAGE_TAG2"
