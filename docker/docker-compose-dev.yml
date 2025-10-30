@@ -1,5 +1,5 @@
 services:
-  persis-service:
+  movie-trailer-service:
     container_name: ${APP_NAME:-movie-trailer}
     image: ${REPOSITORY_URL:-movie-trailer}:${TAG_NUMBER:-latest}
     restart: always
