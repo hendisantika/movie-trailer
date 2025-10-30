@@ -76,35 +76,40 @@ test:integration:
   stage: test
   image: maven:3.9-amazoncorretto-25
   services:
-    - name: postgres:18.0-alpine3.22
-      alias: postgres
+    - name: docker:28.5.1-dind-alpine3.22
+      alias: docker
   variables:
-    POSTGRES_DB: movie_trailers_test
-    POSTGRES_USER: testuser
-    POSTGRES_PASSWORD: testpass
-    SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/movie_trailers_test
-    SPRING_DATASOURCE_USERNAME: testuser
-    SPRING_DATASOURCE_PASSWORD: testpass
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+    TESTCONTAINERS_RYUK_DISABLED: "true"
+  before_script:
+    # Wait for Docker to be ready
+    - until docker info >/dev/null 2>&1; do echo "Waiting for Docker..."; sleep 1; done
+    - echo "Docker is ready!"
   script:
+    - echo "Running integration tests with Testcontainers..."
     - echo "Checking for integration tests..."
     - |
-      if find src/test/java -name "*IT.java" -o -name "*IntegrationTest.java" 2>/dev/null | grep -q .; then
-        echo "Running integration tests..."
-        mvn $MAVEN_CLI_OPTS verify -Dspring.profiles.active=test
+      if find src/test/java -name "*IT.java" -o -name "*Test.java" 2>/dev/null | grep -q .; then
+        echo "Found test files, running tests..."
+        mvn $MAVEN_CLI_OPTS test -Dspring.profiles.active=test
+        echo "Integration tests completed!"
       else
-        echo "No integration tests found - skipping"
-        mkdir -p target/failsafe-reports
+        echo "No test files found - skipping"
+        mkdir -p target/surefire-reports
         exit 0
       fi
   artifacts:
     when: always
     reports:
       junit:
-        - target/failsafe-reports/TEST-*.xml
+        - target/surefire-reports/TEST-*.xml
     paths:
-      - target/failsafe-reports/
+      - target/surefire-reports/
     expire_in: 7 days
-  allow_failure: true
+  allow_failure: false
   only:
     - branches
     - tags
