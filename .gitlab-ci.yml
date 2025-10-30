@@ -184,11 +184,26 @@ docker build:
     - echo "$env_gitlab" > .env_gitlab
     - source .env_gitlab
     - apk add --no-cache curl jq aws-cli
+    - |
+      # Validate required variables
+      if [ -z "$REPOSITORY_URL" ]; then
+        echo "ERROR: REPOSITORY_URL is not set!"
+        echo "Please check your env_gitlab variable in GitLab CI/CD settings"
+        exit 1
+      fi
+      if [ -z "$ECR_URL" ]; then
+        echo "ERROR: ECR_URL is not set!"
+        exit 1
+      fi
+      echo "Using repository: $REPOSITORY_URL:$CI_PIPELINE_IID"
   script:
-    # - $(aws ecr get-login --region ap-southeast-1)
+    - echo "Logging into AWS ECR..."
     - aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin $ECR_URL
+    - echo "Building Docker image..."
     - docker build -t $REPOSITORY_URL:$CI_PIPELINE_IID .
+    - echo "Pushing to ECR..."
     - docker push $REPOSITORY_URL:$CI_PIPELINE_IID
+    - echo "Successfully pushed $REPOSITORY_URL:$CI_PIPELINE_IID"
   only:
     - complete
     - main
@@ -207,10 +222,26 @@ docker build prod:
     - echo "$ENV_GITLAB" > .env_gitlab
     - source .env_gitlab
     - apk add --no-cache curl jq aws-cli
+    - |
+      # Validate required variables
+      if [ -z "$REPOSITORY_URL" ]; then
+        echo "ERROR: REPOSITORY_URL is not set!"
+        echo "Please check your ENV_GITLAB variable in GitLab CI/CD settings"
+        exit 1
+      fi
+      if [ -z "$ECR_URL" ]; then
+        echo "ERROR: ECR_URL is not set!"
+        exit 1
+      fi
+      echo "Using repository: $REPOSITORY_URL:$CI_COMMIT_REF_NAME"
   script:
+    - echo "Logging into AWS ECR..."
     - aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin $ECR_URL
+    - echo "Building production Docker image..."
     - docker build --network host -t $REPOSITORY_URL:$CI_COMMIT_REF_NAME .
+    - echo "Pushing to ECR..."
     - docker push $REPOSITORY_URL:$CI_COMMIT_REF_NAME
+    - echo "Successfully pushed $REPOSITORY_URL:$CI_COMMIT_REF_NAME"
 
 docker push to docker hub:
   image: docker:28.4.0-alpine3.22
