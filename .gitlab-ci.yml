@@ -336,7 +336,7 @@ deploy dev:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - ssh $USER_DEV@$SERVER_DEV "[ -d ~/movie-trailer ] || mkdir ~/movie-trailer"
     - rsync -avuz $CI_PROJECT_DIR/.dev.env $USER_DEV@$SERVER_DEV:~/movie-trailer/.env
-    - rsync -avuz $CI_PROJECT_DIR/docker/docker/docker-compose-dev.yml $USER_DEV@$SERVER_DEV:~/movie-trailer/docker-compose.yml
+    - rsync -avuz $CI_PROJECT_DIR/docker/docker-compose-dev.yml $USER_DEV@$SERVER_DEV:~/movie-trailer/docker-compose.yml
   script:
     - pwd
     - ssh $USER_DEV@$SERVER_DEV "eval aws ecr get-login-password --region ap-southeast-1 | docker login --username $ECR_USERNAME --password-stdin $ECR_URL; cd ~/movie-trailer; docker compose --env-file .env -f docker-compose.yml down; docker system prune -af; docker pull $REPOSITORY_ECR_URL:$CI_PIPELINE_IID; docker compose --env-file .env -f docker-compose.yml up -d"
