@@ -93,7 +93,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - run: docker build -t movie-service:$IMAGE_TAG .
+      - run: docker build -t movie-trailer:$IMAGE_TAG .
 
       - name: Push to ECR
         env:
