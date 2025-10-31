@@ -118,7 +118,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_ACCESS_SECRET_KEY }}
@@ -150,7 +150,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{secrets.SERVER_SSH_KEY}}
           SSH_KNOWN_HOSTS: ${{secrets.SERVER_HOST}}
 
-      - name: Deploy the application
+      - name: Set all environments for the application
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_PORT: ${{ secrets.SERVER_PORT }}
@@ -167,6 +167,13 @@ jobs:
           echo CONTAINER_NAME=$CONTAINER_NAME >> .env
           echo ECR_REPOSITORY=$ECR_REPOSITORY >> .env
           echo IMAGE_TAG=$IMAGE_TAG >> .env
+          echo APP_ENV=dev
+          echo SPRING_ACTIVE_PROFILE=dev
+          echo APP_NAME=movie-trailer
+          echo APP_PORT=8081
+          echo SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL >> .env
+          echo SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME >> .env
+          echo SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD >> .env
 
       - name: Use SSH key
         uses: appleboy/scp-action@v1.0.0
@@ -189,6 +196,9 @@ jobs:
           CONTAINER_NAME: movie-service
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+          SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
         run: |
           set -e
           ./deploy.sh
