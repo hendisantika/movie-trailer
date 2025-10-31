@@ -75,7 +75,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile
+          file: Dockerfile-github
           push: true
           labels: ${{ steps.meta.outputs.labels }}
           tags: hendisantika/movie-service:${{ github.run_number }}
@@ -120,7 +120,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - run: docker build -t movie-trailer:$IMAGE_TAG .
+      - run: docker build -t movie-trailer:$IMAGE_TAG -f Dockerfile-github .
 
       - name: Push to ECR
         env:
