@@ -188,16 +188,19 @@ jobs:
           CONTAINER_NAME: movie-service
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_ECR_REGISTRY: ${{ vars.AWS_ECR_REGISTRY }}
+          AWS_ECR_REPOSITORY: ${{ vars.AWS_ECR_REPO }}
+          APP_PORT: ${{ vars.APP_PORT }}
         run: |
           echo AWS_REGION=$AWS_REGION >> .env
           echo AWS_ECR_REGISTRY=$AWS_ECR_REGISTRY >> .env
+          echo AWS_ECR_REPOSITORY=$AWS_ECR_REPOSITORY >> .env
           echo CONTAINER_NAME=$CONTAINER_NAME >> .env
           echo ECR_REPOSITORY=$ECR_REPOSITORY >> .env
           echo IMAGE_TAG=$IMAGE_TAG >> .env
-          echo APP_ENV=dev
-          echo SPRING_ACTIVE_PROFILE=dev
-          echo APP_NAME=movie-trailer
-          echo APP_PORT=8081
+          echo APP_ENV=dev >> .env
+          echo SPRING_ACTIVE_PROFILE=dev >> .env
+          echo APP_NAME=movie-trailer >> .env
+          echo APP_PORT=$APP_PORT >> .env
           echo SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL >> .env
           echo SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME >> .env
           echo SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD >> .env
