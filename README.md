@@ -3,6 +3,12 @@
 A modern Spring Boot web application for managing and showcasing movie trailers with YouTube integration and real-time
 poster images from TMDB CDN.
 
+![Home Page](img/home.png "Home Page")
+
+![List Movies](img/list.png "List Movies")
+
+![Add New Movie](img/Add-New-Movie.png "Add New Movie")
+
 ## Table of Contents
 
 - [Overview](#overview)
