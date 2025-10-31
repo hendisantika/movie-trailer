@@ -160,7 +160,7 @@ jobs:
           IMAGE_TAG: ${{ github.run_number }}
           CONTAINER_NAME: movie-service
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+          AWS_ECR_REGISTRY: ${{ vars.AWS_ECR_REGISTRY }}
         run: |
           echo AWS_REGION=$AWS_REGION >> .env
           echo AWS_ECR_REGISTRY=$AWS_ECR_REGISTRY >> .env
