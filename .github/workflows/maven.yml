@@ -190,6 +190,10 @@ jobs:
           AWS_ECR_REGISTRY: ${{ vars.AWS_ECR_REGISTRY }}
           AWS_ECR_REPOSITORY: ${{ vars.AWS_ECR_REPO }}
           APP_PORT: ${{ vars.APP_PORT }}
+          SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+
         run: |
           echo AWS_REGION=$AWS_REGION >> .env
           echo AWS_ECR_REGISTRY=$AWS_ECR_REGISTRY >> .env

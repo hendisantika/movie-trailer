@@ -18,6 +18,7 @@ if [ "$(docker ps -qa -f name=$CONTAINER_NAME)" ]; then
 fi
 
 docker run -d --rm -p $APP_PORT:$APP_PORT --name $CONTAINER_NAME -e SPRING_PROFILES_ACTIVE=github $AWS_ECR_REPOSITORY:$IMAGE_TAG
+docker ps
 exit
 ENDSSH
 
