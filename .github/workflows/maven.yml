@@ -84,30 +84,30 @@ jobs:
             GIT_COMMIT_MESSAGE=${{ github.event.head_commit.message }}
             GIT_VERSION_HASH=${{ github.sha }}
 
-    push-to-github-container-registry:
-      runs-on: ubuntu-latest
-      permissions:
-        contents: read
-        packages: write
+  push-to-github-container-registry:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-        - name: Log in to GitHub Container Registry
-          uses: docker/login-action@v3
-          with:
-            registry: ghcr.io
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-        - name: Build and push Docker image
-          run: |
-            IMAGE_NAME=ghcr.io/${{ github.repository }}
-            # You can use a specific tag or 'latest'
-            TAG=${{ github.run_number }}
-            docker build . --tag $IMAGE_NAME:$TAG
-            docker push $IMAGE_NAME:$TAG
+      - name: Build and push Docker image
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository }}
+          # You can use a specific tag or 'latest'
+          TAG=${{ github.run_number }}
+          docker build . --tag $IMAGE_NAME:$TAG
+          docker push $IMAGE_NAME:$TAG
 
   push-to-ecr:
     runs-on: ubuntu-latest
