@@ -197,7 +197,7 @@ jobs:
           echo CONTAINER_NAME=$CONTAINER_NAME >> .env
           echo ECR_REPOSITORY=$ECR_REPOSITORY >> .env
           echo IMAGE_TAG=$IMAGE_TAG >> .env
-          echo APP_ENV=dev >> .env
+          echo APP_ENV=github >> .env
           echo SPRING_ACTIVE_PROFILE=dev >> .env
           echo APP_NAME=movie-trailer >> .env
           echo APP_PORT=$APP_PORT >> .env
