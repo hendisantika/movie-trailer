@@ -12,7 +12,9 @@ services:
     expose:
       - "5433"
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      # Use named volume for cross-platform compatibility
+      # For bind mount, use: ./postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U yu71 -d movie_trailers" ]
       interval: 10s
