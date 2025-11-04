@@ -1,0 +1,45 @@
+# Docker Compose with Bind Mount for Local Development
+# Use this file if you need direct access to database files
+#
+# IMPORTANT: Before using, create the directory:
+#   mkdir -p postgres_data
+#
+# Usage:
+#   docker compose -f compose.local.yaml up -d
+#
+# This configuration uses a bind mount instead of a named volume.
+# Pros: Easy access to database files, simple backups
+# Cons: May have permission issues on some systems
+
+services:
+  postgres:
+    image: postgres:18.0-alpine3.22
+    container_name: postgres-movie-trailers
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: 53cret
+      POSTGRES_DB: movie_trailers
+      POSTGRES_USER: yu71
+      # Set PGDATA to avoid permission issues
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    expose:
+      - "5433"
+    volumes:
+      # Bind mount with subdirectory to avoid permission conflicts
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U yu71 -d movie_trailers" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+    networks:
+      - trailers-network
+    # Run as postgres user (UID 999) to avoid permission issues
+    user: "999:999"
+
+networks:
+  trailers-network:
+    driver: bridge

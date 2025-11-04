@@ -6,7 +6,7 @@
 ## Migration Details
 
 ### Migration File
-- **Location:** `src/main/resources/db/migration/V1_30102025_1838__insert_dummy_movies.sql`
+- **Location:** `src/main/resources/db/migration/V2_30102025_1838__insert_dummy_movies.sql`
 - **Version:** V1_30102025_1838
 - **Description:** Insert Dummy Movies
 - **Status:** Successfully applied
